@@ -73,8 +73,9 @@
   .feature p { font-size: 14.5px; color: var(--color-text-secondary); }
   .feature .icon { font-size: 28px; margin-bottom: 12px; }
 
-  /* 工具表 */
-  table { width: 100%; border-collapse: collapse; background: var(--color-card); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  /* 工具表：移动端套横向滚动容器，避免撑破整页 */
+  .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+  table { width: 100%; min-width: 660px; border-collapse: collapse; background: var(--color-card); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
   th, td { padding: 13px 18px; text-align: left; font-size: 14.5px; border-bottom: 1px solid var(--color-border); }
   th { background: #eef2f6; font-size: 14px; }
   tr:last-child td { border-bottom: none; }
@@ -108,10 +109,45 @@
   footer a { color: #8b949e; }
   .icp { margin-top: 10px; font-size: 12.5px; color: #6e7681; }
 
-  @media (max-width: 720px) {
-    .features { grid-template-columns: 1fr; }
-    .hero h1 { font-size: 30px; }
+  /* 响应式：平板 */
+  @media (max-width: 900px) {
+    .features { grid-template-columns: repeat(2, 1fr); }
+    .hero { padding: 56px 0 42px; }
+    .hero h1 { font-size: 36px; }
   }
+
+  /* 响应式：手机 */
+  @media (max-width: 640px) {
+    .container { padding: 0 16px; }
+    .nav { flex-direction: column; gap: 10px; padding: 12px 0; }
+    .nav-links a { display: inline-block; margin: 0 12px 4px 0; font-size: 14px; }
+    .logo { font-size: 18px; }
+    .hero { padding: 44px 0 34px; }
+    .hero h1 { font-size: 28px; line-height: 1.3; }
+    .hero p.sub { font-size: 16px; margin-bottom: 24px; }
+    .badge { font-size: 12.5px; padding: 4px 10px; margin: 3px 4px; }
+    .btn { display: block; padding: 12px 20px; font-size: 15px; margin: 0 auto; }
+    .btn.secondary { margin: 10px auto 0; }
+    .version-note { font-size: 12px; }
+    .stat-row { gap: 22px; }
+    .stat .num { font-size: 30px; }
+    .stat .lbl { font-size: 12px; }
+    section { padding: 40px 0; }
+    h2 { font-size: 23px; }
+    .section-sub { font-size: 14px; margin-bottom: 26px; }
+    .features { grid-template-columns: 1fr; gap: 14px; }
+    .feature { padding: 20px; }
+    th, td { padding: 10px 12px; font-size: 13px; white-space: nowrap; }
+    .download-box { padding: 26px 18px; }
+    .download-box h3 { font-size: 18px; }
+    .sha { font-size: 11.5px; }
+    .notice { font-size: 12.5px; padding: 12px 14px; }
+    footer { padding: 28px 0; font-size: 12.5px; }
+    .icp { font-size: 11px; }
+  }
+
+  /* 防止长英文、URL、数字撑破容器 */
+  .container, .feature, .download-box, .notice { overflow-wrap: break-word; word-break: break-word; }
 </style>
 </head>
 <body>
@@ -193,6 +229,7 @@
   <div class="container">
     <h2>工具清单（130 个）</h2>
     <p class="section-sub">30 个内置开箱即用 · 100 个按需下载到指定目录 · 覆盖 20+ 类别</p>
+    <div class="table-wrap">
     <table>
       <thead>
         <tr><th>工具</th><th>类别</th><th>简介</th><th>方式</th><th>许可</th></tr>
@@ -213,6 +250,7 @@
         <tr><td>Kimi / Codex / Cursor 等</td><td>AI 工具</td><td>AI 编程助手快捷入口</td><td><span class="tag link">入口</span></td><td>服务条款</td></tr>
       </tbody>
     </table>
+    </div>
   </div>
 </section>
 
