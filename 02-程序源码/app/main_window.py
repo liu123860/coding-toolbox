@@ -142,6 +142,14 @@ class MainWindow(QMainWindow):
 
     # ---------- 启动检查 ----------
     def _startup_check(self):
+        # 首次启动时自动创建默认目录，避免弹出"目录不存在"警告
+        for key in ("install_dir", "download_dir", "archive_dir"):
+            path = self.cfg.get(key, "")
+            if path:
+                try:
+                    os.makedirs(path, exist_ok=True)
+                except OSError:
+                    pass
         problems = self.cfg.check_directories()
         for p in problems:
             logger.error("目录检查失败：%s (%s) - %s", p["key"], p["path"], p["reason"])

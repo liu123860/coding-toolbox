@@ -1,27 +1,24 @@
-"""日志模块：运行日志按日期滚动，统一备份到 L 盘项目目录。"""
+"""日志模块：运行日志按日期滚动，统一写到程序目录内的预留目录。"""
 import logging
 import os
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
-BACKUP_ROOT_CANDIDATES = [
-    r"L:\WorkBuddy临时文件\编程工具箱神器",
-]
+from core.paths import app_root
 
 
 def resolve_backup_root() -> str:
-    """统一使用 L 盘 WorkBuddy临时文件 下的项目目录；不可用时降级到本地备用目录。"""
-    for candidate in BACKUP_ROOT_CANDIDATES:
-        try:
-            os.makedirs(candidate, exist_ok=True)
-            probe = os.path.join(candidate, ".probe")
-            with open(probe, "w", encoding="utf-8") as f:
-                f.write("ok")
-            os.remove(probe)
-            return candidate
-        except OSError:
-            continue
-    return os.path.join(os.getcwd(), "logs")
+    """所有数据落在程序目录内的 toolbox 下，不依赖任何外部盘符。"""
+    root = os.path.join(app_root(), "toolbox")
+    try:
+        os.makedirs(root, exist_ok=True)
+        probe = os.path.join(root, ".probe")
+        with open(probe, "w", encoding="utf-8") as f:
+            f.write("ok")
+        os.remove(probe)
+        return root
+    except OSError:
+        return os.path.join(os.getcwd(), "logs")
 
 
 def get_logger(name: str = "toolbox") -> logging.Logger:
