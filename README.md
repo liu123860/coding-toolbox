@@ -4,7 +4,8 @@
 
 - 版本：Beta v0.3
 - 平台：Windows 10 / 11（仅 x64）
-- 官网：https://coding-toolbox.app.workbuddy.host/?sharecode=KMF43KSXC3
+- 官网：https://v.gd/tHAYou
+- 仓库：https://github.com/liu123860/coding-toolbox
 
 ## 功能特性
 
