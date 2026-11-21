@@ -1,4 +1,4 @@
-"""编程工具箱神器 Beta v0.3 —— 程序入口。"""
+"""计算机人员专业工具箱 Beta v0.3 —— 程序入口。"""
 import os
 import sys
 
@@ -12,10 +12,10 @@ from core.logger import get_logger
 
 def main():
     app = QApplication(sys.argv)
-    app.setApplicationName("编程工具箱神器")
+    app.setApplicationName("计算机人员专业工具箱")
     app.setOrganizationName("ToolboxAlpha")
     logger = get_logger("toolbox.main")
-    logger.info("=== 编程工具箱神器 Beta v0.3 启动 ===")
+    logger.info("=== 计算机人员专业工具箱 Beta v0.3 启动 ===")
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

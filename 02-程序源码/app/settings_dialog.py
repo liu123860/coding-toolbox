@@ -42,11 +42,11 @@ class SettingsDialog(QDialog):
 
         self.tier = QComboBox()
         for n in TIER_OPTIONS:
-            self.tier.addItem(f"{n} 个工具", n)
+            self.tier.addItem(f"{n} 个", n)
         cur_tier = int(self.cfg.get("tier", 30))
         idx = self.tier.findData(cur_tier)
         self.tier.setCurrentIndex(idx if idx >= 0 else 0)
-        form.addRow("工具库档位", self.tier)
+        form.addRow("内置应用数量", self.tier)
 
         self.concurrency = QSpinBox()
         self.concurrency.setRange(1, 10)
@@ -101,10 +101,10 @@ class SettingsDialog(QDialog):
         self.cfg.set("manifest_url", self.manifest.text().strip())
         self.cfg.save()
         if new_tier != old_tier:
-            logger.info("工具库档位由 %d 调整为 %d", old_tier, new_tier)
+            logger.info("内置应用数量由 %d 调整为 %d", old_tier, new_tier)
             QMessageBox.information(
-                self, "档位已更新",
-                f"工具库档位已调整为 {new_tier} 个。\n"
+                self, "内置应用数量已更新",
+                f"内置应用数量已调整为 {new_tier} 个。\n"
                 f"新增显示的工具可按需下载到临时下载目录。")
         logger.info("设置已保存")
         self.accept()

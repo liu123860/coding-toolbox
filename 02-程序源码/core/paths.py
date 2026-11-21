@@ -36,5 +36,5 @@ def user_root() -> str:
     """可写数据根目录。"""
     if is_frozen():
         base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
-        return os.path.join(base, "编程工具箱神器")
+        return os.path.join(base, "计算机人员专业工具箱")
     return os.path.dirname(bundle_dir())

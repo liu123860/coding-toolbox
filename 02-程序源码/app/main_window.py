@@ -1,4 +1,4 @@
-"""主窗口：工具中心（按档位）、内置启动、按需下载、启动检查、退出处理。"""
+"""主窗口：工具中心（按内置应用数量筛选）、内置启动、按需下载、启动检查、退出处理。"""
 import os
 import subprocess
 import sys
@@ -24,6 +24,7 @@ logger = get_logger(__name__)
 
 BASE_DIR = bundle_dir()
 VERSION = "Beta v0.3"
+APP_NAME = "计算机人员专业工具箱"
 # 视为「可直接下载的文件」的扩展名；其余 download_url 视为网页，用浏览器打开
 FILE_EXT = (".exe", ".zip", ".msi", ".7z", ".rar", ".tar.gz", ".dmg", ".pkg")
 
@@ -31,8 +32,8 @@ FILE_EXT = (".exe", ".zip", ".msi", ".7z", ".rar", ".tar.gz", ".dmg", ".pkg")
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle(f"编程工具箱神器 {VERSION}")
-        self.resize(1000, 640)
+        self.setWindowTitle(f"{APP_NAME} {VERSION}")
+        self.resize(1060, 660)
 
         self.cfg = ConfigManager()
         self.registry = ToolRegistry(os.path.join(BASE_DIR, "data", "tools.json"))
@@ -50,16 +51,14 @@ class MainWindow(QMainWindow):
 
         top = QHBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText("搜索工具名称 / 类别…")
+        self.search.setPlaceholderText("搜索工具名称 / 类别…（列表可 Ctrl/Shift 多选）")
         self.search.textChanged.connect(self._refresh_tables)
-        self.tier_label = QLabel()
         btn_settings = QPushButton("设置")
         btn_settings.clicked.connect(self._open_settings)
         btn_update = QPushButton("检查更新")
         btn_update.clicked.connect(self._check_updates)
         top.addWidget(QLabel("搜索："))
         top.addWidget(self.search, 1)
-        top.addWidget(self.tier_label)
         top.addWidget(btn_settings)
         top.addWidget(btn_update)
         layout.addLayout(top)
@@ -84,7 +83,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.tabs)
 
         btns = QHBoxLayout()
-        btn_launch = QPushButton("启动 / 下载选中工具")
+        btn_launch = QPushButton("启动 / 下载选中工具（可多选）")
         btn_launch.clicked.connect(self._launch_selected)
         btn_folder = QPushButton("打开下载目录")
         btn_folder.clicked.connect(self._open_download_dir)
@@ -104,6 +103,7 @@ class MainWindow(QMainWindow):
         table.setHorizontalHeaderLabels(headers)
         table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        table.setSelectionMode(QAbstractItemView.ExtendedSelection)  # Ctrl/Shift 多选
         table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         return table
 
@@ -124,7 +124,6 @@ class MainWindow(QMainWindow):
 
     def _refresh_tables(self):
         tier = int(self.cfg.get("tier", 30))
-        self.tier_label.setText(f"当前档位：{tier} / 130")
         active = self.registry.tools_for_tier(tier)
         builtin = [t for t in active if t.get("source") == "builtin"]
         download = [t for t in active if t.get("source") in ("download", "link")]
@@ -162,15 +161,19 @@ class MainWindow(QMainWindow):
             logger.info("启动目录检查全部通过")
 
     # ---------- 工具选择 ----------
-    def _selected_tool(self):
+    def _selected_tools(self):
+        """返回当前列表中选中的全部工具（支持多选）。"""
         table = self.tabs.currentWidget()
         if table not in (self.builtin_table, self.download_table):
-            return None
-        row = table.currentRow()
-        if row < 0:
-            return None
+            return []
         shown = getattr(table, "_shown_tools", [])
-        return shown[row] if row < len(shown) else None
+        rows = sorted({idx.row() for idx in table.selectedIndexes()})
+        if not rows:
+            row = table.currentRow()
+            if row >= 0 and row < len(shown):
+                return [shown[row]]
+            return []
+        return [shown[r] for r in rows if r < len(shown)]
 
     def _downloaded_exe(self, tool):
         """在下载目录里找该工具已下载的主程序。"""
@@ -193,31 +196,66 @@ class MainWindow(QMainWindow):
 
     # ---------- 行为 ----------
     def _launch_selected(self):
-        tool = self._selected_tool()
-        if not tool:
-            QMessageBox.information(self, "提示", "请先在列表中选中一个工具。")
+        tools = self._selected_tools()
+        if not tools:
+            QMessageBox.information(self, "提示", "请先在列表中选中工具（可 Ctrl/Shift 多选）。")
             return
-        if tool.get("source") == "builtin":
-            self._launch_builtin(tool)
-        else:
-            self._handle_download_tool(tool)
+        launched, started_dl, opened, errors = [], [], [], []
+        for tool in tools:
+            if tool.get("source") == "builtin":
+                if self._launch_builtin(tool, quiet=True):
+                    launched.append(tool["name"])
+                else:
+                    errors.append(tool["name"])
+            else:
+                result = self._handle_download_tool(tool, quiet=True)
+                if result == "launched":
+                    launched.append(tool["name"])
+                elif result == "download":
+                    started_dl.append(tool["name"])
+                elif result == "link":
+                    opened.append(tool["name"])
+                elif result == "busy":
+                    errors.append(f"{tool['name']}（正在下载中）")
+                else:
+                    errors.append(tool["name"])
+        parts = []
+        if launched:
+            parts.append(f"已启动 {len(launched)} 个：\n" + "、".join(launched))
+        if started_dl:
+            parts.append(f"已开始下载 {len(started_dl)} 个：\n" + "、".join(started_dl))
+        if opened:
+            parts.append(f"已打开官网 {len(opened)} 个：\n" + "、".join(opened))
+        if errors:
+            parts.append(f"未处理 {len(errors)} 个：\n" + "、".join(errors))
+        if parts:
+            QMessageBox.information(self, "批量操作结果", "\n\n".join(parts))
 
-    def _launch_builtin(self, tool):
+    def _launch_builtin(self, tool, quiet=False):
         exe = self.registry.builtin_executable(tool, self.cfg.get("install_dir", ""))
         if not os.path.exists(exe):
-            QMessageBox.warning(self, "工具缺失",
-                                f"{tool['name']} 未找到主程序：\n{exe}")
-            return
+            if not quiet:
+                QMessageBox.warning(self, "工具缺失",
+                                    f"{tool['name']} 未找到主程序：\n{exe}")
+            else:
+                logger.warning("工具缺失：%s", tool["name"])
+            return False
         userdata_dir = os.path.join(self.cfg.get("install_dir", ""), "userdata", tool["id"])
         os.makedirs(userdata_dir, exist_ok=True)
         try:
             subprocess.Popen([exe], cwd=os.path.dirname(exe))
             self.running_tools[tool["id"]] = userdata_dir
             logger.info("已启动工具：%s", tool["name"])
+            return True
         except OSError as exc:
-            QMessageBox.critical(self, "启动失败", str(exc))
+            if not quiet:
+                QMessageBox.critical(self, "启动失败", str(exc))
+            else:
+                logger.error("启动失败：%s - %s", tool["name"], exc)
+            return False
 
-    def _handle_download_tool(self, tool):
+    def _handle_download_tool(self, tool, quiet=False):
+        """返回 'launched' | 'download' | 'link' | 'busy' | 'error'。"""
         local = self._downloaded_exe(tool)
         if local:
             try:
@@ -226,25 +264,31 @@ class MainWindow(QMainWindow):
                     self.cfg.get("install_dir", ""), "userdata", tool["id"])
                 os.makedirs(self.running_tools[tool["id"]], exist_ok=True)
                 logger.info("已启动已下载工具：%s", tool["name"])
+                return "launched"
             except OSError as exc:
-                QMessageBox.critical(self, "启动失败", str(exc))
-            return
+                if not quiet:
+                    QMessageBox.critical(self, "启动失败", str(exc))
+                logger.error("启动失败：%s - %s", tool["name"], exc)
+                return "error"
 
         url = tool.get("download_url") or tool.get("website")
         if tool["id"] in self.downloads:
-            QMessageBox.information(self, "提示", f"{tool['name']} 正在下载中。")
-            return
+            if not quiet:
+                QMessageBox.information(self, "提示", f"{tool['name']} 正在下载中。")
+            return "busy"
         is_file = url.lower().split("?")[0].endswith(FILE_EXT)
         if not is_file:
             # 下载页/在线服务：打开官网，并告知应保存到的目录
             dest = os.path.join(self.cfg.get("download_dir", ""), tool["id"])
             QDesktopServices.openUrl(QUrl(url))
-            QMessageBox.information(
-                self, "请从官方下载",
-                f"「{tool['name']}」需从官网获取安装文件。\n已为你打开官方页面。\n\n"
-                f"请下载程序后，将其放入以下目录以便工具箱统一管理：\n{dest}")
-            return
+            if not quiet:
+                QMessageBox.information(
+                    self, "请从官方下载",
+                    f"「{tool['name']}」需从官网获取安装文件。\n已为你打开官方页面。\n\n"
+                    f"请下载程序后，将其放入以下目录以便工具箱统一管理：\n{dest}")
+            return "link"
         self._start_download(tool, url)
+        return "download"
 
     def _start_download(self, tool, url):
         dest = os.path.join(self.cfg.get("download_dir", ""), tool["id"])
@@ -253,7 +297,8 @@ class MainWindow(QMainWindow):
         worker.finished_ok.connect(lambda p, t=tool: self._download_done(t, p))
         worker.failed.connect(lambda e, t=tool: self._download_failed(t, e))
         self.downloads[tool["id"]] = worker
-        self.dl_label.setText(f"正在下载：{tool['name']} ← {url}")
+        n = len(self.downloads)
+        self.dl_label.setText(f"正在下载（{n} 个任务）：{tool['name']} ← {url}")
         self.tabs.setCurrentWidget(self.download_tab)
         worker.start()
 
@@ -261,11 +306,14 @@ class MainWindow(QMainWindow):
         # 若下载的是压缩包，尝试自动解压到同目录
         if path.lower().endswith((".zip", ".7z", ".rar")):
             self._extract_archive(path, os.path.dirname(path))
-        self.dl_label.setText(f"下载完成：{path}")
         self.downloads.pop(tool["id"], None)
+        remain = len(self.downloads)
+        self.dl_label.setText(
+            f"下载完成：{path}" + (f"（仍有 {remain} 个任务进行中）" if remain else ""))
         self._refresh_tables()
-        QMessageBox.information(self, "下载完成",
-                                f"「{tool['name']}」已下载到：\n{os.path.dirname(path)}")
+        if not remain:
+            self.progress.setValue(100)
+        logger.info("下载完成：%s -> %s", tool["name"], path)
 
     def _extract_archive(self, archive, dest):
         try:
@@ -284,9 +332,13 @@ class MainWindow(QMainWindow):
             logger.warning("自动解压失败：%s", exc)
 
     def _download_failed(self, tool, err):
-        self.dl_label.setText(f"下载失败：{tool['name']} - {err}")
         self.downloads.pop(tool["id"], None)
-        QMessageBox.warning(self, "下载失败", f"{tool['name']} 下载失败：\n{err}")
+        remain = len(self.downloads)
+        self.dl_label.setText(
+            f"下载失败：{tool['name']} - {err}" + (f"（仍有 {remain} 个任务进行中）" if remain else ""))
+        logger.warning("下载失败：%s - %s", tool["name"], err)
+        if not remain:
+            QMessageBox.warning(self, "下载失败", f"{tool['name']} 下载失败：\n{err}")
 
     def _open_download_dir(self):
         dest = self.cfg.get("download_dir", "")
@@ -294,9 +346,12 @@ class MainWindow(QMainWindow):
         QDesktopServices.openUrl(QUrl.fromLocalFile(dest))
 
     def _open_website(self):
-        tool = self._selected_tool()
-        if tool:
-            QDesktopServices.openUrl(QUrl(tool.get("website", "")))
+        tools = self._selected_tools()
+        if tools:
+            for tool in tools:
+                url = tool.get("website", "")
+                if url:
+                    QDesktopServices.openUrl(QUrl(url))
 
     def _open_settings(self):
         dlg = SettingsDialog(self.cfg, self)

@@ -45,3 +45,8 @@ id_rsa*
 Thumbs.db
 .idea/
 .vscode/
+
+# ===== 内置 Python 运行时（由 setup_embed_python.py 生成，不入库）=====
+**/python/Lib/site-packages/
+**/python/*.zip
+embed-python-dist/
