@@ -11,7 +11,7 @@ DEFAULT_CONFIG: Dict = {
     "download_dir": "",         # 软件/插件临时下载目录（默认：程序目录内）
     "archive_dir": "",          # 用户数据冻结归档目录（默认：程序目录内）
     "concurrency": 3,           # 下载并发数
-    "tier": 30,                 # 工具库档位：30/50/60/80/100/130
+    "tier": 130,                # 内置应用数量：30/50/60/80/100/130，默认全量展示（含100个可下载）
     "manifest_url": "",         # 工具清单更新源（自有服务器 JSON）
     "log_level": "INFO",
 }
@@ -51,9 +51,9 @@ class ConfigManager:
         for key, val in defaults.items():
             if not self.config.get(key):
                 self.config[key] = val
-        # 档位校验：非法值回落到 30
+        # 内置应用数量校验：非法值回落到 130（默认展示全部工具）
         if self.config.get("tier") not in TIER_OPTIONS:
-            self.config["tier"] = 30
+            self.config["tier"] = 130
 
     def save(self):
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
