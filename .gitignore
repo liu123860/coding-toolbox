@@ -9,9 +9,8 @@
 03-资源文件/builtin/
 03-资源文件/builtin-payload/
 
-# ===== 安装包产物（v0.3 正式版经 Git LFS 入库，其余旧版排除）=====
-04-安装包/output/*
-!04-安装包/output/编程工具箱神器-Beta-v0.3-x64-Setup.exe
+# ===== 安装包产物（v0.3 改由 GitHub Release 分发，见 README）=====
+04-安装包/output/
 
 # ===== 官网随站托管的安装包副本 =====
 05-官网/downloads/
@@ -23,8 +22,6 @@ toolbox/
 
 # ===== 通用二进制 / 归档（GitHub 单文件上限 100MB）=====
 *.exe
-# 例外：v0.3 正式安装包经 Git LFS 入库（LFS 指针文件远小于 100MB）
-!04-安装包/output/编程工具箱神器-Beta-v0.3-x64-Setup.exe
 *.zip
 *.7z
 *.rar

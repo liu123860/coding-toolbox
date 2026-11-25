@@ -35,7 +35,16 @@
 └── 06-测试与日志/      各版本测试报告
 ```
 
-> 第三方工具二进制、PyInstaller 构建产物与安装包不在本仓库内（见 `.gitignore`）。
+> 第三方工具二进制与 PyInstaller 构建产物不在本仓库内（见 `.gitignore`）。安装包v0.3 以 Release 资产形式提供（525MB，超出普通 Git 单文件上限），下载地址见下节。
+
+## 下载安装包（Beta v0.3，x64）
+
+- **GitHub Release**（直接下载）：[计算机人员专业工具箱 Beta v0.3](https://github.com/liu123860/coding-toolbox/releases/tag/Beta-v0.3)
+- **官网短链**：https://v.gd/tHAYou
+- 文件名：`编程工具箱神器-Beta-v0.3-x64-Setup.exe`（历史文件名，内容为本产品）
+- 大小：549,707,401 字节（525MB），Inno Setup 制作，仅 x64
+- SHA256：`f8a8c51bcf7fb50584066a03686e00f05aa6ee13961357a45cee7d7b6dfb7ce1`
+- 未签名：SmartScreen 提示「未知发布者」属正常，选「更多信息 → 仍要运行」，可用 SHA256 校验完整性。
 
 ## 从源码运行
 
